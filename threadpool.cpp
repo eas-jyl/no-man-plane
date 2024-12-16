@@ -38,3 +38,41 @@ int thread::get_thread_id() const {
 }
 
 
+/*Result类接口*/
+Result::Result(std::shared_ptr<Task> task, bool isvaild) : result_status(isvaild) , m_task(task)
+{
+	m_task->connect_result(this); 
+}
+
+
+void Result::get_result_from_task(Any value) {
+	this->m_any = std::move(value);
+	m_sem.post();
+}
+
+
+Any Result::send_result_to_user() {
+	if (result_status == false) return "";
+	m_sem.wait();
+	return std::move(m_any);
+}
+
+
+
+
+/*Task类接口*/
+void Task::run_exec(){
+	if (m_result != nullptr) {
+		// 先执行任务 然后传给结果对象
+		m_result->get_result_from_task(task_run());
+	}
+}
+
+void Task::connect_result(Result* res) {
+	m_result = res;
+}
+
+
+
+
+
